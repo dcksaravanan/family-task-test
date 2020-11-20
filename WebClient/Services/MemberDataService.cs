@@ -1,5 +1,8 @@
-﻿using Domain.Commands;
+﻿using Core.Extensions.ModelConversion;
+using Domain.Commands;
 using Domain.Queries;
+using Domain.ViewModel;
+using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +11,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using WebClient.Abstractions;
-using Microsoft.AspNetCore.Components;
-using Domain.ViewModel;
-using Core.Extensions.ModelConversion;
 
 namespace WebClient.Services
 {
@@ -41,7 +41,7 @@ namespace WebClient.Services
         }
 
         private async Task<CreateMemberCommandResult> Create(CreateMemberCommand command)
-        {            
+        {
             return await httpClient.PostJsonAsync<CreateMemberCommandResult>("members", command);
         }
 
@@ -61,11 +61,11 @@ namespace WebClient.Services
 
             Console.WriteLine(JsonSerializer.Serialize(result));
 
-            if(result != null)
+            if (result != null)
             {
                 var updatedList = (await GetAllMembers()).Payload;
 
-                if(updatedList != null)
+                if (updatedList != null)
                 {
                     members = updatedList;
                     MembersChanged?.Invoke(this, null);

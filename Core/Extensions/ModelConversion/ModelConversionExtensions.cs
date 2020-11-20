@@ -1,11 +1,11 @@
-﻿using Domain.Commands;
+﻿using Domain.ClientSideModels;
+using Domain.Commands;
+using Domain.DataModels;
 using Domain.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Domain.ClientSideModels;
-using Domain.DataModels;
 
 namespace Core.Extensions.ModelConversion
 {
@@ -20,6 +20,16 @@ namespace Core.Extensions.ModelConversion
                 Roles = model.Roles,
                 Avatar = model.Avatar,
                 Email = model.Email
+            };
+            return command;
+        }
+        public static CreateTaskCommand ToCreateTaskCommand(this TaskVm model)
+        {
+            var command = new CreateTaskCommand()
+            {
+                Subject = model.Subject,
+                IsComplete = model.IsComplete,
+                AssignedMemberId = model.AssignedMemberId
             };
             return command;
         }
@@ -45,6 +55,16 @@ namespace Core.Extensions.ModelConversion
                 Roles = model.Roles,
                 Avatar = model.Avatar,
                 Email = model.Email
+            };
+            return command;
+        }
+        public static UpdateTaskCommand ToUpdateTaskCommand(this TaskVm model)
+        {
+            var command = new UpdateTaskCommand()
+            {
+                Id = model.Id,
+                IsComplete = model.IsComplete,
+
             };
             return command;
         }

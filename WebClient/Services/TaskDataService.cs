@@ -1,51 +1,103 @@
-﻿using System;
+﻿using Core.Extensions.ModelConversion;
+using Domain.Commands;
+using Domain.Queries;
+using Domain.ViewModel;
+using Microsoft.AspNetCore.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using WebClient.Abstractions;
 using WebClient.Shared.Models;
 
 namespace WebClient.Services
 {
-    public class TaskDataService: ITaskDataService
+    public class TaskDataService : ITaskDataService
     {
-        public TaskDataService()
+        private readonly HttpClient httpClient;
+        public TaskDataService(IHttpClientFactory clientFactory)
         {
-            Tasks = new List<TaskModel>();
+            httpClient = clientFactory.CreateClient("FamilyTaskAPI");
+            tasks = new List<TaskVm>();
+            LoadTasks();
         }
 
 
 
+        private IEnumerable<TaskVm> tasks;
 
-        public List<TaskModel> Tasks { get; private set; }
-        public TaskModel SelectedTask { get; private set; }
+        public IEnumerable<TaskVm> Tasks => tasks;
+
+        public TaskVm SelectedTask { get; private set; }
 
 
         public event EventHandler TasksUpdated;
         public event EventHandler TaskSelected;
+        public event EventHandler<string> UpdateTaskFailed;
+        public event EventHandler<string> CreateTaskFailed;
 
+
+        private async void LoadTasks()
+        {
+            tasks = (await GetAllTasks()).Payload;
+            TasksUpdated?.Invoke(this, null);
+        }
+        private async Task<GetAllTasksQueryResult> GetAllTasks()
+        {
+            return await httpClient.GetJsonAsync<GetAllTasksQueryResult>("tasks");
+        }
         public void SelectTask(Guid id)
         {
             SelectedTask = Tasks.SingleOrDefault(t => t.Id == id);
             TasksUpdated?.Invoke(this, null);
         }
 
-        public void ToggleTask(Guid id)
+        public async Task ToggleTask(Guid id)
         {
-            foreach (var taskModel in Tasks)
+            var model = tasks.FirstOrDefault(t => t.Id == id);
+            model.IsComplete = !model.IsComplete;
+            var result = await Update(model.ToUpdateTaskCommand());
+            if (result != null)
             {
-                if (taskModel.Id == id)
+                var updatedList = (await GetAllTasks()).Payload;
+
+                if (updatedList != null)
                 {
-                    taskModel.IsDone = !taskModel.IsDone;
+                    tasks = updatedList;
+                    TasksUpdated?.Invoke(this, null);
+                    return;
                 }
+                UpdateTaskFailed?.Invoke(this, "The creation was successful, but we can no longer get an updated list of members from the server.");
             }
 
-            TasksUpdated?.Invoke(this, null);
+            UpdateTaskFailed?.Invoke(this, "Unable to create record.");
         }
-
-        public void AddTask(TaskModel model)
+        private async Task<CreateTaskCommandResult> Create(CreateTaskCommand command)
         {
-            Tasks.Add(model);
-            TasksUpdated?.Invoke(this, null);
+            return await httpClient.PostJsonAsync<CreateTaskCommandResult>("tasks", command);
+        }
+        private async Task<UpdateTaskCommandResult> Update(UpdateTaskCommand command)
+        {
+            return await httpClient.PutJsonAsync<UpdateTaskCommandResult>($"tasks/{command.Id}", command);
+        }
+        public async Task AddTask(TaskVm model)
+        {
+            var result = await Create(model.ToCreateTaskCommand());
+            if (result != null)
+            {
+                var updatedList = (await GetAllTasks()).Payload;
+
+                if (updatedList != null)
+                {
+                    tasks = updatedList;
+                    TasksUpdated?.Invoke(this, null);
+                    return;
+                }
+                UpdateTaskFailed?.Invoke(this, "The creation was successful, but we can no longer get an updated list of members from the server.");
+            }
+
+            UpdateTaskFailed?.Invoke(this, "Unable to create record.");
         }
     }
 }

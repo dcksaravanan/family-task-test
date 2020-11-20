@@ -4,8 +4,8 @@ using System.Text;
 
 namespace Domain.Commands
 {
-    public class UpdateMemberCommandResult
+    public class UpdateMemberCommandResult : UpdateCommandResult
     {
-        public bool Succeed { get; set; }
+
     }
 }

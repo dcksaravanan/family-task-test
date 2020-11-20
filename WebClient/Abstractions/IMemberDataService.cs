@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Domain.Commands;
+using Domain.Queries;
+using Domain.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Domain.Commands;
-using Domain.Queries;
-using Domain.ViewModel;
 
 namespace WebClient.Abstractions
 {
