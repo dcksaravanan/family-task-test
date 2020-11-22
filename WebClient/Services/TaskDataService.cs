@@ -99,5 +99,23 @@ namespace WebClient.Services
 
             UpdateTaskFailed?.Invoke(this, "Unable to create record.");
         }
+        public async Task UpdateTask(TaskVm model)
+        {
+            var result = await Update(model.ToUpdateTaskCommand());
+            if (result != null)
+            {
+                var updatedList = (await GetAllTasks()).Payload;
+
+                if (updatedList != null)
+                {
+                    tasks = updatedList;
+                    TasksUpdated?.Invoke(this, null);
+                    return;
+                }
+                UpdateTaskFailed?.Invoke(this, "The creation was successful, but we can no longer get an updated list of members from the server.");
+            }
+
+            UpdateTaskFailed?.Invoke(this, "Unable to create record.");
+        }
     }
 }

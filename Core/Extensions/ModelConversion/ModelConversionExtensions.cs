@@ -64,6 +64,7 @@ namespace Core.Extensions.ModelConversion
             {
                 Id = model.Id,
                 IsComplete = model.IsComplete,
+                AssignedMemberId = model.AssignedMemberId
 
             };
             return command;

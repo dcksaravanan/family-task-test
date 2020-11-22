@@ -5,20 +5,22 @@
 @using WebClient.Shared.Models
 @using WebClient.Components
 @using WebClient.Shared.Components
+@using WebClient.Services
 @inject IMemberDataService memberService;
 @inject ITaskDataService taskDataService;
-
-@if(isLoaded) {
+        @if (isLoaded)
+        {
     <div class="page-wrapper row m-0 col-12 p-0">
         <div class="col-4 p-0">
-            <LeftMenu  Mode="LeftMenu.MenuMode.Tasks"/>
+            <LeftMenu @ref="leftMenu" Mode="LeftMenu.MenuMode.Tasks" ItemDropped="OnItemDropped" />
         </div>
         <div class="col-8 p-0">
-            @if (showLister) {
+            @if (showLister)
+            {
                 <div class="col-10 offset-1 pt-5">
                     <div class="row m-0">
                         <Field class="col-9 p-0 custom-input">
-                            <TextEdit Placeholder="Enter New Task" @bind-text="@newTask"/>
+                            <TextEdit Placeholder="Enter New Task" @bind-text="@newTask" />
                         </Field>
                         <div class="col-3 p-0 text-right">
                             <Button class="add-btn px-4" @onclick="@OnAddItem">Add</Button>
@@ -26,53 +28,68 @@
                     </div>
                 </div>
                 <div class="col-10 offset-1">
-                    <TaskListerComponent />
+                    <TaskListerComponent @ref="taskLister" ItemDragged="OnItemDragged"/>
                 </div>
             }
-            @if(false) {
+            @if (false)
+            {
                 <div class="col-10 offset-1 pt-5">
                 </div>
             }
         </div>
     </div>
-}
-
-@code {
-
-    public List<MemberVm> members;
-    public string newTask;
-
-
-    private bool isLoaded;
-    private bool showLister;
-
-    protected override Task OnInitializedAsync()
-    {
-        showLister = true;
-        isLoaded = true;
-        return base.OnInitializedAsync();
-    }
-
-
-    
-
-    private void OnAddItem()
-    {
-        var task = new TaskVm()
-        {
-            Id = Guid.NewGuid(),
-            IsComplete = false,
-            Subject = newTask
-        };
-
-        newTask = string.Empty;
-
-        if (memberService.SelectedMember != null)
-        {
-            task.AssignedMemberId = memberService.SelectedMember.Id;
         }
-        taskDataService.AddTask(task);
-        StateHasChanged();
-    }
 
-}
+        @code {
+            LeftMenu leftMenu;
+            TaskListerComponent taskLister;
+            public List<MemberVm> members;
+            public string newTask;
+            TaskVm dragItem;
+
+            private bool isLoaded;
+            private bool showLister;
+
+            protected override Task OnInitializedAsync()
+            {
+                showLister = true;
+                isLoaded = true;
+                return base.OnInitializedAsync();
+            }
+
+
+
+
+            private void OnAddItem()
+            {
+                var task = new TaskVm()
+                {
+                    Id = Guid.NewGuid(),
+                    IsComplete = false,
+                    Subject = newTask
+                };
+
+                newTask = string.Empty;
+
+                if (memberService.SelectedMember != null)
+                {
+                    task.AssignedMemberId = memberService.SelectedMember.Id;
+                }
+                taskDataService.AddTask(task);
+                StateHasChanged();
+            }
+            void OnItemDropped(Domain.ClientSideModels.MenuItem args)
+            {
+                if(args !=null &&dragItem!=null )
+                {
+                    dragItem.AssignedMemberId = args.referenceId;
+                    taskDataService.UpdateTask(dragItem);
+                    StateHasChanged();
+                }
+            }
+            void OnItemDragged(TaskVm args)
+            {
+                dragItem = args;
+            }
+
+        }

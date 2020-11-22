@@ -1,5 +1,6 @@
 @using WebClient.Abstractions
 @using WebClient.Shared.Models
+@using WebClient.Shared.Components
 @using Domain.ViewModel
 
 @inject ITaskDataService taskService;
@@ -45,25 +46,26 @@
 </style>
 
 <div class="task-wrapper">
-    @foreach (var item in tasks)
-    {
+    <DragDropZone @ref="DragZone" Items="@tasks.ToList()" TItem="TaskVm" OnItemDrag="OnItemDragged">
         <div class="task-item p-3 my-3 row m-0">
             <div class="col-10 p-0">
-                <Check TValue="bool" Checked="@item.IsComplete" CheckedChanged="@(val => ToggleTask(item))">
-                    <span class="@(item.IsComplete ? "done-text" : "")">@item.Subject</span>
+                <Check TValue="bool" Checked="@context.IsComplete" CheckedChanged="@(val => ToggleTask(context))">
+                    <span class="@(context.IsComplete ? "done-text" : "")">@context.Subject</span>
                 </Check>
             </div>
             <div class="col-2 p-0 d-flex justify-content-end align-items-center">
-                @if (item.AssignedMember != null) {
+                @if (context.AssignedMember != null)
+                {
                     <div class="avtar mr-1" style="background-color: @selectedMember.Avatar;"></div>
                 }
-                <img class="delete-icon" src="/assets/images/delete-icon.svg"/>
+                <img class="delete-icon" src="/assets/images/delete-icon.svg" />
             </div>
         </div>
-    }
+        </DragDropZone>
 </div>
 
 @code  {
+    private DragDropZone<TaskVm> DragZone { get; set; }
     private IEnumerable<TaskVm> tasks = new List<TaskVm>();
     private MemberVm selectedMember;
 
@@ -105,5 +107,10 @@
         tasks = taskService.Tasks.Where(t => t.AssignedMemberId == selectedMember.Id).ToList();
         StateHasChanged();
     }
-
+    void OnItemDragged(TaskVm args)
+    {
+        ItemDragged.InvokeAsync(args);
+    }
+    [Parameter]
+    public EventCallback<TaskVm> ItemDragged { get; set; }
 }
